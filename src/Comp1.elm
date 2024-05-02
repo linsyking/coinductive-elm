@@ -4,24 +4,58 @@ import Comp exposing (Component(..), genComp)
 import String exposing (fromInt)
 
 
+{-| Component specific data
+-}
 type alias Data =
     Int
 
 
-initData : Data
-initData =
-    1
+{-| Component specific initialization (constructor)
+-}
+type alias InitDataT =
+    { initVal : Int
+    }
 
 
-update : Data -> Data
-update x =
-    x + 1
+{-| Initializer
+-}
+initData : InitDataT -> Data
+initData init =
+    init.initVal
 
 
-comp : Component
-comp =
+{-| Component specific messages (interface)
+-}
+type Msg
+    = Increase
+    | Decrease
+
+
+{-| Updater
+-}
+update : Msg -> Data -> Data
+update msg x =
+    case msg of
+        Increase ->
+            x + 1
+
+        Decrease ->
+            x - 1
+
+
+{-| Renderer
+-}
+render : Data -> String
+render x =
+    fromInt x
+
+
+{-| Exported component
+-}
+comp : InitDataT -> (a -> Maybe Msg) -> Component a
+comp init =
     genComp
-        { init = initData
+        { init = initData init
         , update = update
-        , render = fromInt
+        , render = render
         }
