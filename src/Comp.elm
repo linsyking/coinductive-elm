@@ -11,7 +11,7 @@ module Comp exposing (..)
 {-| a is the message type
 -}
 type Component a
-    = Unroll { update : a -> () -> Component a, render : () -> String }
+    = Unroll { update : a -> Component a, render : () -> String }
 
 
 {-| A concrete component before upcasting to the general component
@@ -36,7 +36,7 @@ genComp concomp transfer =
     let
         genCompRec comp =
             let
-                updates msg () =
+                updates msg =
                     let
                         transferred =
                             transfer msg
@@ -65,7 +65,7 @@ update : a -> Component a -> Component a
 update msg comp =
     case comp of
         Unroll cc ->
-            cc.update msg ()
+            cc.update msg
 
 
 {-| Render a component. Component users should use this function to render a component.
