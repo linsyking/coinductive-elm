@@ -11,17 +11,17 @@ module Comp exposing (..)
 {-| a is the message type
 -}
 type Component a
-    = Unroll { update : a -> Component a, render : () -> String }
+    = Unroll
+        { update : a -> ( Component a, a )
+        , render : () -> String
+        }
 
 
-{-| A concrete component before upcasting to the general component
-
-We may add more functions to this type in the future. (For example, the getters)
-
+{-| A concrete component before upcasting to the general component.
 -}
 type alias ConcreteComponent a b =
-    { init : a
-    , update : b -> a -> a
+    { init : b -> a
+    , update : b -> a -> ( a, b )
     , render : a -> String
     }
 
@@ -31,22 +31,26 @@ type alias ConcreteComponent a b =
 Use this when creating a component.
 
 -}
-genComp : ConcreteComponent a c -> (b -> Maybe c) -> Component b
-genComp concomp transfer =
+genComp : ConcreteComponent a c -> (b -> Maybe c) -> (c -> b) -> b -> Maybe (Component b)
+genComp concomp decode encode initMsg =
     let
         genCompRec comp =
             let
                 updates msg =
                     let
                         transferred =
-                            transfer msg
+                            decode msg
                     in
                     case transferred of
                         Nothing ->
-                            genCompRec comp
+                            ( genCompRec comp, msg )
 
                         Just ok_msg ->
-                            genCompRec (concomp.update ok_msg comp)
+                            let
+                                ( new_comp, new_msg ) =
+                                    concomp.update ok_msg comp
+                            in
+                            ( genCompRec new_comp, encode new_msg )
 
                 renders () =
                     concomp.render comp
@@ -56,12 +60,16 @@ genComp concomp transfer =
                 , render = renders
                 }
     in
-    genCompRec concomp.init
+    decode initMsg
+        |> Maybe.andThen
+            (\msg ->
+                Just (genCompRec (concomp.init msg))
+            )
 
 
 {-| Update a component. Component users should use this function to update a component.
 -}
-update : a -> Component a -> Component a
+update : a -> Component a -> ( Component a, a )
 update msg comp =
     case comp of
         Unroll cc ->

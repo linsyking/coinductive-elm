@@ -1,4 +1,4 @@
-module Comp1 exposing (..)
+module PortableComponents.PortableComp exposing (..)
 
 import Comp exposing (Component(..), genComp)
 import String exposing (fromInt)
@@ -19,9 +19,14 @@ type alias InitDataT =
 
 {-| Initializer
 -}
-initData : InitDataT -> Data
+initData : Msg -> Data
 initData init =
-    init.initVal
+    case init of
+        Init data ->
+            data.initVal
+
+        _ ->
+            0
 
 
 {-| Component specific messages (interface)
@@ -29,18 +34,23 @@ initData init =
 type Msg
     = Increase
     | Decrease
+    | NoOp
+    | Init InitDataT
 
 
 {-| Updater
 -}
-update : Msg -> Data -> Data
+update : Msg -> Data -> ( Data, Msg )
 update msg x =
     case msg of
         Increase ->
-            x + 1
+            ( x + 1, NoOp )
 
         Decrease ->
-            x - 1
+            ( x - 1, NoOp )
+
+        _ ->
+            ( x, NoOp )
 
 
 {-| Renderer
@@ -52,10 +62,10 @@ render x =
 
 {-| Exported component
 -}
-comp : InitDataT -> (a -> Maybe Msg) -> Component a
-comp init =
+comp : (a -> Maybe Msg) -> (Msg -> a) -> a -> Maybe (Component a)
+comp =
     genComp
-        { init = initData init
+        { init = initData
         , update = update
         , render = render
         }
