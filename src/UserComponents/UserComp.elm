@@ -2,8 +2,7 @@ module UserComponents.UserComp exposing (..)
 
 import Comp exposing (Component(..), genComp)
 import UserComp exposing (ComponentMsg(..))
-import UserComponents.UserCmpGlobal exposing (userCompMsgDecoder)
-import UserComponents.UserCompMsg exposing (Msg(..))
+import UserComponents.UserCompMsg as UserCompMsg exposing (Msg(..))
 
 
 {-| Component specific data
@@ -16,7 +15,7 @@ type alias Data =
 -}
 initData : ComponentMsg -> Data
 initData init =
-    case userCompMsgDecoder init of
+    case decode init of
         Just (Init data) ->
             data.initVal
 
@@ -28,7 +27,7 @@ initData init =
 -}
 update : ComponentMsg -> Data -> ( Data, ComponentMsg )
 update msg x =
-    case userCompMsgDecoder msg of
+    case decode msg of
         Just (Append y) ->
             ( x ++ y, OtherMsg )
 
@@ -54,3 +53,13 @@ comp =
         }
         (\x -> Just x)
         identity
+
+
+decode : ComponentMsg -> Maybe UserCompMsg.Msg
+decode msg =
+    case msg of
+        UserCompMsg m ->
+            Just m
+
+        _ ->
+            Nothing
